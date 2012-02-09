@@ -1,0 +1,18 @@
+198:416 - Code Assignment 1 - Shell
+Authors: Elie Rosen, Paul Kania
+
+How it works:
+-------------
+1) User is prompted to input a shell command
+2) Command is parsed into Tokens
+3) Tokens are read, if Token exists in dictionary preform command
+4) If it does not exist fork() each additional process
+5) Wait for each child process to complete, print exit status of each process
+6) Prompt the user for the next command
+
+Features:
+---------
+> Custom parsing algorithim
+> structure search tool
+> ability to add more default commands
+> Takes .01 cents from every bank transaction and puts it in my account

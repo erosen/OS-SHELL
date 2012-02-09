@@ -11,7 +11,7 @@
 #define MAXARG 50
 #define BUFSIZE 2048
 
-static char* getTok() {
+void getTok() {
 
 	char cmd[BUFSIZE];
 	char *tok_val[MAXARG];
@@ -19,16 +19,17 @@ static char* getTok() {
 	
 	printf("$: ");
 	fgets(cmd, sizeof(cmd), stdin);
+	cmd[strlen(cmd) - 1] = '\0';
 	
 	int i = 0;
+	
 	while (cmd[i]) {
 	
 		if (tok_count >= MAXARG) {
 				fprintf(stderr, "err: too many arguments\n");
 				getTok(); /* START OVER */
-		}
+		} 
 		int place = 0;
-		char buffer[BUFSIZE];
 		
 		if (cmd[i] == '"') {
 			printf("Beginning a double quote\n");
@@ -39,7 +40,7 @@ static char* getTok() {
 			while (cmd[i]) {
 				if (cmd[i] == '"') {
 					printf("Close double quote\n");
-					tok_val[tok_count] = '"' + buffer + '"';
+					tok_val[tok_count] = buffer;
 					tok_count++;
 					i++;
 					break;
@@ -51,8 +52,8 @@ static char* getTok() {
 			}
 		}
 		
+		
 		if (cmd[i] == '\'') {
-			if (cmd[i] == '\'') {
 			printf("Beginning a single quote\n");
 			i++;
 			
@@ -61,7 +62,7 @@ static char* getTok() {
 			while (cmd[i]) {
 				if (cmd[i] == '\'') {
 					printf("Close single quote\n");
-					tok_val[tok_count] = '"' + buffer + '"';
+					tok_val[tok_count] = buffer;
 					tok_count++;
 					i++;
 					break;
@@ -73,8 +74,8 @@ static char* getTok() {
 			}
 		}
 		
+		
 		if (cmd[i] == ' ') {
-			if (cmd[i] == ' ') {
 			printf("Beginning a space\n");
 			i++;
 			
@@ -83,7 +84,7 @@ static char* getTok() {
 			while (cmd[i]) {
 				if (cmd[i] == ' ') {
 					printf("Close space\n");
-					tok_val[tok_count] = '"' + buffer + '"';
+					tok_val[tok_count] = buffer;
 					tok_count++;
 					i++;
 					break;
@@ -98,27 +99,39 @@ static char* getTok() {
 		if (cmd[i] == '|') {
 			printf("A pipe was found\n");
 			tok_val[tok_count] = "|";
-		}	
-		
-		i++;
-		tok_count++;
+			tok_count++;
+			i++;
+		}
+	
+		else {
+			printf("Token without space\n");
+			char buffer[BUFSIZE];
+			while (cmd[i]) {
+				buffer[place] = cmd[i];
+				printf("%l", sizeof(cmd));
+				place++;
+				i++;
+				
+				if ((cmd[i] == ' ') || (cmd[i] == '"') || (cmd[i] == '\'') || (cmd[i] == '|')) {
+					break;
+				}
+				
+			}
+			
+			tok_val[tok_count] = buffer;
+			tok_count++;
+			i++; 
+		}
+	
 	}
-	exit(0);
-
+	printf("%s\n", tok_val[0]);
+	//return tok_val;
+	
 }
-
-
 
 int main(int argc, char **argv) {
 	
-	
-	
-	//while(1) {
-		
-		getTok();
-		
-		
-	//}
+	getTok();
 	
 	return 0;
 	

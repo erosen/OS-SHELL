@@ -15,7 +15,7 @@ void getTok() {
 
 	char cmd[BUFSIZE];
 	char *tok_val[MAXARG];
-	int tok_count = 0;
+	int tok_num = 0;
 	
 	printf("$: ");
 	fgets(cmd, sizeof(cmd), stdin);
@@ -23,110 +23,65 @@ void getTok() {
 	
 	int i = 0;
 	
-	while (cmd[i]) {
+	int dflag = 0;
+	int sflag = 0;
+	int spflag = 0;
 	
-		if (tok_count >= MAXARG) {
-				fprintf(stderr, "err: too many arguments\n");
-				getTok(); /* START OVER */
-		} 
-		int place = 0;
-		
-		if (cmd[i] == '"') {
-			printf("Beginning a double quote\n");
-			i++;
-			
-			char buffer[BUFSIZE];
-						
-			while (cmd[i]) {
-				if (cmd[i] == '"') {
-					printf("Close double quote\n");
-					tok_val[tok_count] = buffer;
-					tok_count++;
-					i++;
-					break;
-				}
-				
-				buffer[place] = cmd[i];
-				place++;
-				i++;
-			}
-		}
-		
-		
-		if (cmd[i] == '\'') {
-			printf("Beginning a single quote\n");
-			i++;
-			
-			char buffer[BUFSIZE];
-						
-			while (cmd[i]) {
-				if (cmd[i] == '\'') {
-					printf("Close single quote\n");
-					tok_val[tok_count] = buffer;
-					tok_count++;
-					i++;
-					break;
-				}
-				
-				buffer[place] = cmd[i];
-				place++;
-				i++;
-			}
-		}
-		
-		
-		if (cmd[i] == ' ') {
-			printf("Beginning a space\n");
-			i++;
-			
-			char buffer[BUFSIZE];
-						
-			while (cmd[i]) {
-				if (cmd[i] == ' ') {
-					printf("Close space\n");
-					tok_val[tok_count] = buffer;
-					tok_count++;
-					i++;
-					break;
-				}
-				
-				buffer[place] = cmd[i];
-				place++;
-				i++;
-			}
-		}
-		
-		if (cmd[i] == '|') {
-			printf("A pipe was found\n");
-			tok_val[tok_count] = "|";
-			tok_count++;
-			i++;
-		}
 	
-		else {
-			printf("Token without space\n");
-			char buffer[BUFSIZE];
-			while (cmd[i]) {
+	
+	char buffer[BUFSIZE];
+	int place = 0;
+	
+	while (i <= strlen(cmd)) {
+	
+		switch (cmd[i]) {
+		
+			case '"' : { /* double quote */
+				if ((sflag == 0) && (spflag == 0)) {
+					dflag++;
+					i++;
+				}
+			}
+			case '\'' : { /* single quote */
+				if ((dflag == 0) && (spflag == 0)) {
+					sflag++;
+					i++;
+				}
+			}
+			case ' ' : {  /* space */
+				if ((dflag == 0) && (sflag == 0)) {
+					spflag++;
+					i++;
+				}
+			}
+			case '|' : {  /* pipe */
+				if ((dflag == 0) && (sflag == 0) && (spflag == 0)) {
+					tok_val[tok_num] = "|";
+					tok_num++;
+					i++;
+				}
+			}
+			default : {
 				buffer[place] = cmd[i];
-				printf("%l", sizeof(cmd));
 				place++;
 				i++;
+			}
+		}
 				
-				if ((cmd[i] == ' ') || (cmd[i] == '"') || (cmd[i] == '\'') || (cmd[i] == '|')) {
-					break;
-				}
-				
+		if ((dflag == 2) || (sflag == 2) || (spflag == 2)) {
+			tok_val[tok_num] = buffer;
+			tok_num++;
+			
+			int j;
+			for (j = 0; j<= strlen(buffer); j++) {
+				buffer[j] = '\0';
 			}
 			
-			tok_val[tok_count] = buffer;
-			tok_count++;
-			i++; 
+			place = 0; dflag = 0; sflag = 0; spflag = 0;
+			
 		}
-	
 	}
 	printf("%s\n", tok_val[0]);
-	//return tok_val;
-	
 }
 
 int main(int argc, char **argv) {
@@ -136,3 +91,4 @@ int main(int argc, char **argv) {
 	return 0;
 	
 }
+

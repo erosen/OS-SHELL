@@ -8,124 +8,139 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #define MAXARG 50
 #define BUFSIZE 2048
 
-void getTok() {
+typedef int (command_t)(int argc, char *const *argv);
+typedef struct builtin_s {
+char const *name;
+command_t *func;
+} builtin_t;
 
-	char cmd[BUFSIZE];
-	char *tok_val[MAXARG];
-	int tok_num = 0;
-	
-	printf("$: ");
-	fgets(cmd, sizeof(cmd), stdin);
-	cmd[strlen(cmd) - 1] = '\0';
-	
-	if(strlen(cmd) == 0) { /* if no input startover */
-		getTok();
-	}
-	
-	int i;
-	
-	int dflag = 0;
-	int sflag = 0;
-	int spflag = 0;
-	int aflag = 0;
-	
-	
-	
-	char buffer[BUFSIZE];
-	int place = 0;
-	
-	
-	for(i = 0; i < strlen(cmd); i++) {
-	
-		switch (cmd[i]) {
-		
-			case '"': /* double quote */
-				
-				if ((sflag == 0) && (spflag == 0) ) {
-					dflag++;
-					
-				}
-				else {
-					buffer[place] = cmd[i];
-					place++;
-				}
-				break;
-			
-			case '\'': /* single quote */
-		
-				if ((dflag == 0) && (spflag == 0)) {
-					sflag++;
-					
-				}
-				else {
-					buffer[place] = cmd[i];
-					place++;
-				}
-				break;
-			
-			case ' ':  /* space */
-		
-				if ((dflag == 0) && (sflag == 0)) {
-					spflag++;
-				}
-				break;
-			
-			case '|':  /* pipe */
-				
-				if ((dflag == 0) && (sflag == 0)) {
-					tok_val[tok_num] = "|";
-					tok_num++;
-				}
-				else {
-					buffer[place] = cmd[i];
-					place++;
-				}
-				break;
-			
-			default: 
-				if (isalnum(cmd[i]) || (cmd[i] == '-')) {
-					buffer[place] = cmd[i];
-					place++;
-				}
-				if ((!isalnum(cmd[i+1]) && (cmd[i+1] != '-')) ) {
-					aflag++;
-				}
-				break;
-			
-		}
-				
-		if ((dflag == 2) || (sflag == 2) || (spflag == 2) || aflag) {
-			tok_val[tok_num] = buffer;
-			tok_num++;
-			
-			place = 0; dflag = 0; sflag = 0; spflag = 0; aflag = 0;
-			continue;
-			
-			
-			
-			int j;
-			for (j = 0; j <= strlen(buffer); j++) {
-				buffer[j] = '\0';
-			}
-		}
-	}
-	
-	int k;
-	for(k = 0; k < tok_num; k++)	
-			printf("tok_val[%i] = \"%s\"\n", i, tok_val[i]);
-	
+static int cmdDef(int argc, char *const *argv) {
 
+	return 0;
 }
+
+static int cmdCd(int argc, char *const *argv) {
+
+	return 0;
+}
+
+static int cmdExit(int argc, char *const *argv) {
+
+	return 0;
+}
+
+static const builtin_t builtins[] = {
+	{ "exit", cmdExit },
+	{ "cd", cmdCd },
+	{ NULL, cmdDef }
+};
+
+static command_t *builtin_get(builtin_t const *dict, char const *name) {
+	while (dict->name != NULL) {
+		if (!strcmp(dict->name, name))
+			break;
+		++dict;
+	}
+	
+	return dict->func;
+}
+
 
 int main(int argc, char **argv) {
 	
-	getTok();
+	if (isatty(0)) { /* get terminal input, otherwise content is already in argv*/
+		
+		char cmd[BUFSIZE];
+		
+		printf("$: ");
+		fgets(cmd, sizeof(cmd), stdin);
+		cmd[strlen(cmd) - 1] = '\0';
+
+		if(strlen(cmd) == 0) { /* if no input startover */
+			main(argc, argv);
+		}
+
+		/* alocate space for counter and token array */
+		int argc = 0;
+		char **argv = (char**)malloc(MAXARG*sizeof(char*));
+		int i;
+		for(i = 0; i < MAXARG; i++) {
+			argv[i] = (char*)malloc(MAXARG*sizeof(char));
+		}
+	
+		int place = 0;
+	
+		int j;
+		for(j = 0; j <= strlen(cmd); j++ ) {
+			
+			
+			if (isspace(cmd[j])) {
+				continue;
+			}
+			
+			else if (cmd[j] == '|') {
+			
+				argv[argc] = "|";
+				argc++;
+				
+			}
+			
+			else if (cmd[j] == '\'') { 
+				j++;
+				while (cmd[j] != '\'') {
+					argv[argc][place] = cmd[j];
+					place++;
+					j++;
+				} 
+				argc++;
+				place = 0;
+				j++;
+			}
+			
+			else if (cmd[j] == '"') { 
+				j++;
+				while (cmd[j] != '"') {
+					argv[argc][place] = cmd[j];
+					place++;
+					j++;
+				} 
+				argc++;
+				place = 0;
+				
+			}
+			
+			else  {
+					argv[argc][place] = cmd[j];
+					place++;
+					
+					if( (isspace(cmd[j+1])) || (cmd[j+1] == '\'') || (cmd[j+1] == '"') || (cmd[j+1] == '|') ) {
+						argc++;
+						place=0;
+						
+					}
+			}
+				
+			
+		}
+		
+		int k;
+		for(k = 0; k < argc; k++) {	
+			printf("%s\n", argv[k]);
+		}
+	}
+	
+	/* Search for existing commmands */
+	 if (argc > 0) {
+		argv[argc] = NULL;
+		builtin_get(builtins, argv[0])(argc, argv);
+	}
+	
 	
 	return 0;
 	
 }
-

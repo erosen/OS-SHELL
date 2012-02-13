@@ -1,8 +1,8 @@
 198:416 - Code Assignment 1 - Shell
 Authors: Elie Rosen, Paul Kania
 
-How it works:
--------------
+How it should work:
+-------------------
 1) User is prompted to input a shell command(s)
 2) The string is parssed into tokens
 3) Tokens are read, if a pipe is found the token splits into commands
@@ -11,9 +11,24 @@ How it works:
 6) Wait for each child process to complete, print exit status of each process
 7) Prompt the user for the next command
 
-Features:
+What it actually does by the deadline:
+-------------------------------------
+1) prompt user only if in terminal, if args are passed through a file it RAGE QUITS
+2) parses tokens correctly, code is commented to display that info
+3) parses tokens into commands by seperating at a pipe
+4) passes the arguments through the search function
+5) exit works, except it can't pass other exit codes
+6) cd works, only tested for one folder though
+7) it can run commands such as ls -l and other commands 
+8) wasn't able to test for more commands
+
+Known Bugs:
+-----------
+1) when a command is finished the prompt doesn't display in the right spot
+
+Resources
 ---------
-> Custom parsing algorithim
-> structure search tool
-> ability to add more default commands
-> Takes .01 cents from every bank transaction and puts it in my account
+I adopted the code for searching, exit, and cd from jmesmon on github
+
+Note: I put a lot of time working into this, I'm pretty upset I wasn't able to fully complete it overall time spent: 45 hours + I think I put a sufficient amount of time into but things happen and this is how it had to be submitted.
+

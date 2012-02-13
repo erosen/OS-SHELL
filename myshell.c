@@ -21,16 +21,17 @@ command_t *func;
 } builtin_t;
 
 static pid_t pid; 
+
 /* Default case for if the command is not in the dictionary */
 static int cmdDef(int argc, char *const *argv) {
 	
 	pid = fork();
+	
 	if (pid == 0) {
 		/* in the child process*/
 		int x = execvp(argv[0], argv);
 		if (x) {
-			fprintf(stderr, "err: %s: %s.\n", argv[0], strerror(errno));
-			fflush(stderr);
+			printf("err: invalid command\n");
 			exit(1);
 		}
 	} 
@@ -115,22 +116,29 @@ static command_t *builtin_get(builtin_t const *dict, const char  *name) {
 	return dict->func; /* go to the function from builtin */
 }
 
+/* prompt user for input */
+char* get_cmd() {
+	char cmd[BUFSIZE];
+	/* get input*/
+	printf("$: ");
+	fgets(cmd, sizeof(cmd), stdin); /* use fgets to recieve input */
+	cmd[strlen(cmd) - 1] = '\0'; /* remove the ret char at the end of line */
+
+	if(strlen(cmd) == 0) { /* if no input startover */
+		get_cmd();
+	}
+	
+	return cmd;
+}
 int main(int argc, char **argv) {
 	
 	while (1) {
 		int place = 0;
 	
 		if (isatty(0)) { /* get terminal input, otherwise content is already in argv*/
-			char cmd[BUFSIZE];
+			
 		
-			/* get input*/
-			printf("$: ");
-			fgets(cmd, sizeof(cmd), stdin); /* use fgets to recieve input */
-			cmd[strlen(cmd) - 1] = '\0'; /* remove the ret char at the end of line */
-
-			if(strlen(cmd) == 0) { /* if no input startover */
-				main(argc, argv);
-			}
+			char* cmd = get_cmd();
 
 			/* alocate space for counter and token array */
 			int argc = 0;
@@ -205,7 +213,7 @@ int main(int argc, char **argv) {
 			int k;
 			for(k = 0; k <= argc; k++) {
 			
-				printf("Token %d: \"%s\"\n", k, argv[k]); /* print existing tokens */
+				/* printf("Token %d: \"%s\"\n", k, argv[k]); print existing tokens */
 		
 				if (strcmp(argv[k], "|")) {
 					commands[command_num][place] =  argv[k]; /* place token into a command */
@@ -218,14 +226,21 @@ int main(int argc, char **argv) {
 				}
 			}
 		
-			printf("Command %d: %s\n", command_num, commands[0][0]);
+			/* printf("Command %d: %s\n", command_num, commands[0][0]); */
 		
 			/* Search for existing commmands */
 			int h;
 			for (h = 0; h <= command_num; h++) {
 				builtin_get(builtins, commands[h][0])(command_num, commands[h]);
 			}
+			
+			cmd = get_cmd();
 		}
+		
+		else {
+			printf("Deleting system32.....\n");
+			exit(0);
+		}		
 	}
 	return 0;
 	

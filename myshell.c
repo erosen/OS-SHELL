@@ -22,7 +22,7 @@ command_t *func;
 
 /* Default case for if the command is not in the dictionary */
 static int cmdDef(int argc, char *const *argv) {
-	printf("in default");
+	printf("....");
 	return 0;
 }
 

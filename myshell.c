@@ -20,9 +20,23 @@ char const *name;
 command_t *func;
 } builtin_t;
 
+static pid_t pid; 
 /* Default case for if the command is not in the dictionary */
 static int cmdDef(int argc, char *const *argv) {
-	printf("....");
+	
+	pid = fork();
+	if (pid == 0) {
+		/* in the child process*/
+		int x = execvp(argv[0], argv);
+		if (x) {
+			fprintf(stderr, "err: %s: %s.\n", argv[0], strerror(errno));
+			fflush(stderr);
+			exit(1);
+		}
+	} 
+	else {
+		
+	}
 	return 0;
 }
 
@@ -74,7 +88,7 @@ static int cmdExit(int argc, char *const *argv) {
 		}
 
 		ret = 0;
-		sscanf(argv[1], "%d", &ret); 
+		sscanf(argv[0], "%d", &ret); 
 
 		/* if sscanf fails, exit with 0 */
 		exit(ret);
@@ -103,145 +117,116 @@ static command_t *builtin_get(builtin_t const *dict, const char  *name) {
 
 int main(int argc, char **argv) {
 	
-	
-	int place = 0;
-	
-	if (isatty(0)) { /* get terminal input, otherwise content is already in argv*/
-		char cmd[BUFSIZE];
-		
-		/* get input*/
-		printf("$: ");
-		fgets(cmd, sizeof(cmd), stdin); /* use fgets to recieve input */
-		cmd[strlen(cmd) - 1] = '\0'; /* remove the ret char at the end of line */
-
-		if(strlen(cmd) == 0) { /* if no input startover */
-			main(argc, argv);
-		}
-
-		/* alocate space for counter and token array */
-		int argc = 0;
-		char argv[50][100];
-		
-		/* var to maintain arg place */
+	while (1) {
 		int place = 0;
 	
-		int j;
-		for(j = 0; j <= strlen(cmd); j++ ) { /* cycle through each letter */
-			
-			if (argc >= MAXARG) { /* RAGE QUIT */
-				exit(0);
+		if (isatty(0)) { /* get terminal input, otherwise content is already in argv*/
+			char cmd[BUFSIZE];
+		
+			/* get input*/
+			printf("$: ");
+			fgets(cmd, sizeof(cmd), stdin); /* use fgets to recieve input */
+			cmd[strlen(cmd) - 1] = '\0'; /* remove the ret char at the end of line */
+
+			if(strlen(cmd) == 0) { /* if no input startover */
+				main(argc, argv);
 			}
-			/* the following section is the culmination of 30+ hours of work */
-			/* and debugging, we tried about 3 different more complicated    */
-			/* methods and non of them worked until this, Thanks Lee Zhou    */
-			/* for recommending to use "else if" - FML moment at 3:00am      */
-			if (isspace(cmd[j])) {
-				continue;
-			}
+
+			/* alocate space for counter and token array */
+			int argc = 0;
+			char argv[50][100];
+		
+			/* var to maintain arg place */
+			int place = 0;
+	
+			int j;
+			for(j = 0; j <= strlen(cmd); j++ ) { /* cycle through each letter */
 			
-			else if (cmd[j] == '|') {
+				if (argc >= MAXARG) { /* RAGE QUIT */
+					exit(0);
+				}
+				/* the following section is the culmination of 30+ hours of work */
+				/* and debugging, we tried about 3 different more complicated    */
+				/* methods and non of them worked until this, Thanks Lee Zhou    */
+				/* for recommending to use "else if" - FML moment at 3:00am      */
+				if (isspace(cmd[j])) {
+					continue;
+				}
 			
-				argv[argc][place] = '|';
-				argc++;
+				else if (cmd[j] == '|') {
+			
+					argv[argc][place] = '|';
+					argc++;
 				
-			}
+				}
 			
-			else if (cmd[j] == '\'') { 
-				j++;
-				while (cmd[j] != '\'') {
-					argv[argc][place] = cmd[j];
-					place++;
+				else if (cmd[j] == '\'') { 
 					j++;
-				} 
-				argc++;
-				place = 0;
-				j++;
-			}
+					while (cmd[j] != '\'') {
+						argv[argc][place] = cmd[j];
+						place++;
+						j++;
+					} 
+					argc++;
+					place = 0;
+					j++;
+				}
 			
-			else if (cmd[j] == '"') { 
-				j++;
-				while (cmd[j] != '"') {
-					argv[argc][place] = cmd[j];
-					place++;
+				else if (cmd[j] == '"') { 
 					j++;
-				} 
-				argc++;
-				place = 0;
+					while (cmd[j] != '"') {
+						argv[argc][place] = cmd[j];
+						place++;
+						j++;
+					} 
+					argc++;
+					place = 0;
 				
-			}
+				}
 			
-			else  {
-					argv[argc][place] = cmd[j];
-					place++;
+				else  {
+						argv[argc][place] = cmd[j];
+						place++;
 					
-					if( (isspace(cmd[j+1])) || (cmd[j+1] == '\'') || (cmd[j+1] == '"') || (cmd[j+1] == '|') ) {
-						argc++;
-						place=0;
+						if( (isspace(cmd[j+1])) || (cmd[j+1] == '\'') || (cmd[j+1] == '"') || (cmd[j+1] == '|') ) {
+							argc++;
+							place=0;
 						
-					}
-			}
+						}
+				}
 				
 			
-		}
-		
-		/* parse out any pipes */ 
-		int command_num = 0;
-		char* commands[50][100];
-		
-		int k;
-		for(k = 0; k <= argc; k++) {
-			
-			printf("Token %d: \"%s\"\n", k, argv[k]); /* print existing tokens */
-		
-			if (strcmp(argv[k], "|")) {
-				commands[command_num][place] =  argv[k]; /* place token into a command */
-				place++;
-			
 			}
-			else { 
-				command_num++; /* increment the command counter */
-				place = 0; 
-			}
-		}
 		
-		/* Search for existing commmands */
-		int h;
-		for (h = 0; h < command_num; h++) {
-			if (command_num > 0) {
+			/* parse out any pipes */ 
+			int command_num = 0;
+			char* commands[50][100];
+			place = 0;
+			int k;
+			for(k = 0; k <= argc; k++) {
+			
+				printf("Token %d: \"%s\"\n", k, argv[k]); /* print existing tokens */
+		
+				if (strcmp(argv[k], "|")) {
+					commands[command_num][place] =  argv[k]; /* place token into a command */
+					place++;
+			
+				}
+				else { 
+					command_num++; /* increment the command counter */
+					place = 0; 
+				}
+			}
+		
+			printf("Command %d: %s\n", command_num, commands[0][0]);
+		
+			/* Search for existing commmands */
+			int h;
+			for (h = 0; h <= command_num; h++) {
 				builtin_get(builtins, commands[h][0])(command_num, commands[h]);
 			}
 		}
 	}
-	
-	else { 
-	
-		/* parse out any pipes */ 
-		int command_num = 0;
-		char* commands[50][100];
-		
-		int k;
-		for(k = 0; k <= argc; k++) {
-			
-			printf("Token %d: \"%s\"\n", k, argv[k]); /* print existing tokens */
-		
-			if (strcmp(argv[k], "|")) {
-				commands[command_num][place] =  argv[k]; /* place token into a command */
-				place++;
-			
-			}
-			else { 
-				command_num++; /* increment the command counter */
-				place = 0; 
-			}
-		}
-		
-		/* Search for existing commmands */
-		if (argc > 0) {
-			argv[argc] = NULL;
-			builtin_get(builtins, argv[0])(argc, argv);
-		}
-	}
-	
 	return 0;
 	
 }
